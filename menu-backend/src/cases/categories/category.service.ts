@@ -1,58 +1,58 @@
 import { Repository } from 'typeorm';
-import { Category } from './category.entity';
+import { Product } from './product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateCategoryDto } from './dto/create-category';
-import { UpdateCategoryDto } from './dto/update-category';
+import { CreateProductDto } from './dto/create-product';
+import { UpdateProductDto } from './dto/update-product';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
-export class CategoryService {
+export class ProductService {
   constructor( 
-    @InjectRepository(Category) 
+    @InjectRepository(Product) 
     
-        private readonly categoryRepository: Repository<Category> 
+        private readonly productRepository: Repository<Product> 
     ) {}  
 
-    findAll(): Promise<Category[]> {
-        return this.categoryRepository.find({
+    findAll(): Promise<Product[]> {
+        return this.productRepository.find({
             order: {name: 'ASC'}
         });
     }
 
-    async findOne(id: string): Promise<Category> {
-        const category = await this.categoryRepository.findOneBy({id});
+    async findOne(id: string): Promise<Product> {
+        const product = await this.productRepository.findOneBy({id});
 
-        if(!category) {
+        if(!product) {
             throw new NotFoundException(`Categoria não encontrada!`);
         }
         
-        return category;
+        return product;
     }
 
-    create(dto: CreateCategoryDto): Promise<Category> {
-        const category = this.categoryRepository.create({
+    create(dto: CreateProductDto): Promise<Product> {
+        const product = this.productRepository.create({
             name: dto.name,
             active: true
         });
-        return this.categoryRepository.save(category);
+        return this.productRepository.save(product);
         }
-    async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
-        const category = await this.findOne(id);
+    async update(id: string, dto: UpdateProductDto): Promise<Product> {
+        const product = await this.findOne(id);
 
         if(dto.name !== undefined) {
-            category.name = dto.name;
+            product.name = dto.name;
         }
             
         if(dto.active !== undefined) {
-            category.active = dto.active;
+            product.active = dto.active;
         }
-        return this.categoryRepository.save(category);
+        return this.productRepository.save(product);
     }
 
     async remove(id: string): Promise<void> {
-        const category = await this.findOne(id);
+        const product = await this.findOne(id);
 
-        await this.categoryRepository.remove(category);
+        await this.productRepository.remove(product);
 
     }
 }

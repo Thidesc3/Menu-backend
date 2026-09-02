@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigureModule.forRoot({ isGlobal: true }),
+  ],
   controllers: [],
   providers: [],
 })
