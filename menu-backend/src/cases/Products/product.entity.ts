@@ -1,29 +1,59 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
-@Entity('product')
+import { Category } from '../category/category.entity';
+
+@Entity('products')
 export class Product {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-    @Column({length: 60, nullable: false})
-    name!: string;
+  @Column({
+    type: 'varchar',
+    length: 60,
+  })
+  name!: string;
 
-    @Column({type: 'boolean', default: true})
-    active!: boolean;
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  active!: boolean;
 
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  description?: string;
 
-    @Column ({type : 'text', nullable: true})
-    description: string;
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+  })
+  price!: number;
 
-    @Column ({type : 'numeric', precision: 10, scale: 2})
-    price: number;
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  picture?: string;
 
-    @Column ({type : 'text', nullable: true})
-    picture: string; 
-
-
-    //Product
-    @ManyToOne(() => Product, (product) => product.products)
-    @JoinColumn({ name: 'product_id' })
-    product: Product | null;
+  @ManyToOne(
+    () => Category,
+    (category) => category.products,
+    {
+      nullable: true,
+      onDelete: 'SET NULL',
+    },
+  )
+  @JoinColumn({
+    name: 'category_id',
+  })
+  category?: Category;
 }

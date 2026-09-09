@@ -1,4 +1,14 @@
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -8,13 +18,12 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  description: string;
-
+  @MaxLength(500)
+  description?: string;
 
   @IsNumber()
   @Min(0)
   price: number;
-
 
   @IsOptional()
   @IsUUID()
@@ -25,6 +34,6 @@ export class CreateProductDto {
   active?: boolean;
 
   @IsOptional()
-  @IsUrl({require_protocol: true})
+  @IsUrl({ require_protocol: true })
   picture?: string;
 }
