@@ -4,53 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category';
 import { UpdateCategoryDto } from './dto/update-category';
-
 @Injectable()
 export class CategoryService {
-    constructor(
-        @InjectRepository(Category)
-        private readonly categoryRepository: Repository<Category> 
-    ) {
-        
-    }
-
-    findAll(): Promise<Category[]> {
-        return this.categoryRepository.find({
-            order: { name: 'ASC' }
-        });
-    }
-
-    async findOne(id: string): Promise<Category> {
-        const category = await this.categoryRepository.findOneBy({ id });
-        if(!category) {
-            throw new NotFoundException('Categoria não encontrada');
-        }
-        return category;
-    }
-
-    create(dto: CreateCategoryDto): Promise<Category> {
-        const category = this.categoryRepository.create({
-            ...dto,
-            name: dto.name,
-            active: true
-        });
-        return this.categoryRepository.save(category);
-    };
-
-    async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
-        const category = await this.findOne(id);
-        if(dto.name !== undefined) {
-            category.name = dto.name;
-        }
-        if(dto.active !== undefined) {
-            category.active = dto.active;
-        }
-        return this.categoryRepository.save(category);
-    }
-
-    async remove(id: string): Promise<void> {
-        const category = await this.findOne(id);
-        await this.categoryRepository.remove(category);
-
-    }
+ constructor(@InjectRepository(Category) private readonly repo:Repository<Category>){}
+ findAll(){return this.repo.find({order:{displayOrder:'ASC',name:'ASC'}});}
+ async findOne(id:string){const row=await this.repo.findOneBy({id});if(!row)throw new NotFoundException('Categoria não encontrada');return row;}
+ create(dto:CreateCategoryDto){return this.repo.save(this.repo.create(dto));}
+ async update(id:string,dto:UpdateCategoryDto){return this.repo.save(Object.assign(await this.findOne(id),dto));}
+ async remove(id:string){await this.repo.remove(await this.findOne(id));}
 }

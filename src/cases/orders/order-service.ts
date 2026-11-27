@@ -1,51 +1,17 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { CreateOrderDto, CreateOrderItemDto } from "./dto/create-order";
-import { Order, OrderStatus } from "./entities/order-entity";
-import { OrderItem } from "./entities/order-item.entity";
-import { GuestCheckService } from "../guest-checks/guest-check.service";
-import { Repository } from "typeorm/browser/repository/Repository.js";
-import { InjectRepository } from "@nestjs/typeorm/dist/common/typeorm.decorators";
-import { ProductService } from "../products/product.service";
-
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { CreateOrderDto } from './dto/create-order';
+import { Order, OrderStatus } from './entities/order-entity';
+import { OrderItem } from './entities/order-item.entity';
+import { GuestCheckService } from '../guest-checks/guest-check.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ProductService } from '../products/product.service';
+import { UpdateOrderStatusDto } from './dto/update-order-status';
 @Injectable()
 export class OrderService {
-    constructor(
-        private readonly guestCheckService: GuestCheckService,
-        private readonly productService: ProductService,
-        @InjectRepository(Order)
-        private readonly orderRepository: Repository<Order>,
-        @InjectRepository(OrderItem)
-        private readonly orderItemRepository: Repository<OrderItem>
-    ){}
-
-    private async prepareItems(dto: CreateOrderItemDto): Promise<OrderItem>{
-        const product = await this.productService.findOne(dto.productId);
-        const subtotal = dto.quantity * Number(product.price);
-        return this.orderItemRepository.create({
-            product,
-            quantity: dto.quantity,
-            subtotal
-        });
-    }
-
-    async create(dto: CreateOrderDto): Promise<Order> {
-        const guestCheck = await this.guestCheckService.findOrCreateOpened(dto.spotId);
-
-        const items: OrderItem[] = [];
-        let total = 0;
-        for (const itemDto of dto.items){
-            const item = await this.prepareItems(itemDto);
-            items.push(item);
-            total += Number(item.subtotal);
-        }
-        const order = this.orderRepository.create(
-            {
-                guestCheck,
-                status: OrderStatus.NEW,
-                total,
-                items
-            }
-        )
-        return this.orderRepository.save(order);
-    }
+ constructor(private readonly guestChecks:GuestCheckService,private readonly products:ProductService,@InjectRepository(Order) private readonly orders:Repository<Order>,@InjectRepository(OrderItem) private readonly items:Repository<OrderItem>){}
+ async create(dto:CreateOrderDto){const items:OrderItem[]=[];let cents=0;for(const item of dto.items){const product=await this.products.findOne(item.productId);if(!product.active)throw new BadRequestException('Produto inativo');const subtotal=Math.round(Number(product.price)*100)*item.quantity;cents+=subtotal;items.push(this.items.create({product,quantity:item.quantity,price:product.price,subtotal:subtotal/100}));}const guestCheck=await this.guestChecks.findOrCreateOpened(dto.spotId);return this.orders.save(this.orders.create({guestCheck,status:OrderStatus.NEW,total:cents/100,items}));}
+ findAll(guestCheckId?:string){return this.orders.find({where:guestCheckId?{guestCheck:{id:guestCheckId}}:{},relations:{guestCheck:{spot:true},items:{product:true}},order:{createdAt:'ASC'}});}
+ async findOne(id:string){const row=await this.orders.findOne({where:{id},relations:{guestCheck:{spot:true},items:{product:true}}});if(!row)throw new NotFoundException('Pedido não encontrado');return row;}
+ async updateStatus(id:string,dto:UpdateOrderStatusDto){await this.findOne(id);await this.orders.update(id,{status:dto.status});return this.findOne(id);}
 }

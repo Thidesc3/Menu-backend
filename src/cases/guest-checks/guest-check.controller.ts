@@ -1,22 +1,12 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { GuestCheck } from './guest-check.entity';
+import { Body, Controller, Get, Param, ParseEnumPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { GuestCheckService } from './guest-check.service';
+import { GuestCheckStatus } from './guest-check.entity';
 import { CreateGuestCheckDto } from './dto/create-guest-check';
-
 @Controller('guest-checks')
-export class GuestCheckController  {
-    constructor(private readonly service: GuestCheckService) {}
-
-    @Get(':id')
-    findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GuestCheck> {
-        return this.service.findOne(id);
-    }
-    @Post()
-    create(@Body() dto: CreateGuestCheckDto): Promise<GuestCheck> {
-        return this.service.create(dto);
-    }
-    @Patch(':id')
-    close(@Param('id', ParseUUIDPipe) id: string): Promise<GuestCheck> {
-        return this.service.close(id);
-    }
+export class GuestCheckController {
+ constructor(private readonly service:GuestCheckService){}
+ @Get() findAll(@Query('status',new ParseEnumPipe(GuestCheckStatus,{optional:true})) status?:GuestCheckStatus){return this.service.findAll(status);}
+ @Get(':id') findOne(@Param('id',ParseUUIDPipe) id:string){return this.service.findDetail(id);}
+ @Post() create(@Body() dto:CreateGuestCheckDto){return this.service.create(dto);}
+ @Patch([':id/close',':id']) close(@Param('id',ParseUUIDPipe) id:string){return this.service.close(id);}
 }
